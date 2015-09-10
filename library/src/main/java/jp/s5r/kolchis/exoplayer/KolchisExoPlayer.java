@@ -2,16 +2,21 @@ package jp.s5r.kolchis.exoplayer;
 
 import android.content.Context;
 import android.media.AudioFormat;
+import android.net.Uri;
 import android.view.Surface;
 
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
+import com.google.android.exoplayer.demo.player.DashRendererBuilder;
 import com.google.android.exoplayer.demo.player.DemoPlayer;
+import com.google.android.exoplayer.demo.player.ExtractorRendererBuilder;
 import com.google.android.exoplayer.demo.player.HlsRendererBuilder;
+import com.google.android.exoplayer.demo.player.SmoothStreamingRendererBuilder;
 import com.google.android.exoplayer.util.Util;
 
 import jp.s5r.kolchis.KolchisPlayer;
 import jp.s5r.kolchis.KolchisPlayerListener;
+import jp.s5r.kolchis.util.SuggestContentType;
 
 public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
 
@@ -63,7 +68,7 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
         if (player != null) {
             release();
         }
-        player = new DemoPlayer(new HlsRendererBuilder(context, userAgent, uri, DEFAULT_AUDIO_CAPABILITIES));
+        player = new DemoPlayer(getRendererBuilder(Uri.parse(uri)));
         player.addListener(this);
         player.prepare();
 
@@ -204,6 +209,23 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
     public void onVideoSizeChanged(int width, int height, float pixelWidthHeightRatio) {
         if (listener != null) {
             listener.onVideoSizeChanged(width, height, pixelWidthHeightRatio);
+        }
+    }
+
+    private DemoPlayer.RendererBuilder getRendererBuilder(Uri contentUri) {
+        SuggestContentType.ContentType contentType = SuggestContentType.fromExtension(contentUri);
+        switch (contentType) {
+            case SMOOTH_STREAMING:
+                return new SmoothStreamingRendererBuilder(context, userAgent, contentUri.toString(), null);
+
+            case MPEG_DASH:
+                return new DashRendererBuilder(context, userAgent, contentUri.toString(), null, DEFAULT_AUDIO_CAPABILITIES);
+
+            case HLS:
+                return new HlsRendererBuilder(context, userAgent, contentUri.toString(), DEFAULT_AUDIO_CAPABILITIES);
+
+            default:
+                return new ExtractorRendererBuilder(context, userAgent, contentUri);
         }
     }
 }
