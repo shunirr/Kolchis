@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 
 import jp.s5r.kolchis.KolchisPlayer;
 import jp.s5r.kolchis.KolchisPlayerListener;
+import jp.s5r.kolchis.util.ContentType;
 import jp.s5r.kolchis.util.SuggestContentType;
 
 public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
@@ -220,13 +221,13 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
     }
 
     private DemoPlayer.RendererBuilder getRendererBuilder(final Uri contentUri) {
-        SuggestContentType.ContentType contentType = SuggestContentType.fromFileExtension(contentUri);
-        if (contentType == SuggestContentType.ContentType.UNKNOWN) {
+        ContentType contentType = SuggestContentType.fromFileExtension(contentUri);
+        if (contentType == ContentType.UNKNOWN) {
             try {
                 contentType = Util.newSingleThreadExecutor(KolchisExoPlayer.class.getName()).submit(
-                        new Callable<SuggestContentType.ContentType>() {
+                        new Callable<ContentType>() {
                             @Override
-                            public SuggestContentType.ContentType call() throws Exception {
+                            public ContentType call() throws Exception {
                                 return SuggestContentType.fromHttpRequest(contentUri, httpClient);
                             }
                         }).get();

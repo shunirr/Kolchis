@@ -9,14 +9,6 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 
 public final class SuggestContentType {
-    public enum ContentType {
-        UNKNOWN,
-        MP4,
-        HLS,
-        MPEG_DASH,
-        SMOOTH_STREAMING,
-        TS
-    }
 
     private SuggestContentType() {
     }
