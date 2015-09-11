@@ -9,8 +9,8 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 
 import jp.s5r.kolchis.KolchisPlayer;
-import jp.s5r.kolchis.KolchisPlayerFactory;
 import jp.s5r.kolchis.KolchisPlayerListener;
+import jp.s5r.kolchis.exoplayer.KolchisExoPlayer;
 import jp.s5r.kolchis.widget.ViewRatioSettable;
 
 public class SampleActivity extends Activity implements KolchisPlayerListener {
@@ -24,7 +24,8 @@ public class SampleActivity extends Activity implements KolchisPlayerListener {
         setContentView(R.layout.main_activity);
 
         videoView = (ViewRatioSettable) findViewById(R.id.video_view);
-        player = KolchisPlayerFactory.getOptimalPlayer(getApplicationContext());
+        player = new KolchisExoPlayer(getApplicationContext());
+//        player = KolchisPlayerFactory.getOptimalPlayer(getApplicationContext());
         player.setKolchisPlayerListener(this);
         player.prepare("http://devimages.apple.com/iphone/samples/bipbop/gear1/prog_index.m3u8");
 

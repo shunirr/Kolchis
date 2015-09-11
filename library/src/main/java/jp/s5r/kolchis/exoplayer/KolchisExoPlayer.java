@@ -13,6 +13,10 @@ import com.google.android.exoplayer.demo.player.ExtractorRendererBuilder;
 import com.google.android.exoplayer.demo.player.HlsRendererBuilder;
 import com.google.android.exoplayer.demo.player.SmoothStreamingRendererBuilder;
 import com.google.android.exoplayer.util.Util;
+import com.squareup.okhttp.OkHttpClient;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import jp.s5r.kolchis.KolchisPlayer;
 import jp.s5r.kolchis.KolchisPlayerListener;
@@ -25,6 +29,8 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
 
     private final Context context;
 
+    private final OkHttpClient httpClient;
+
     private KolchisPlayerListener listener;
 
     private DemoPlayer player;
@@ -33,6 +39,7 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
 
     public KolchisExoPlayer(Context context) {
         this.context = context;
+        this.httpClient = new OkHttpClient();
         this.userAgent = Util.getUserAgent(this.context, "KolchisPlayer");
     }
 
@@ -212,8 +219,21 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
         }
     }
 
-    private DemoPlayer.RendererBuilder getRendererBuilder(Uri contentUri) {
-        SuggestContentType.ContentType contentType = SuggestContentType.fromExtension(contentUri);
+    private DemoPlayer.RendererBuilder getRendererBuilder(final Uri contentUri) {
+        SuggestContentType.ContentType contentType = SuggestContentType.fromFileExtension(contentUri);
+        if (contentType == SuggestContentType.ContentType.UNKNOWN) {
+            try {
+                contentType = Util.newSingleThreadExecutor(KolchisExoPlayer.class.getName()).submit(
+                        new Callable<SuggestContentType.ContentType>() {
+                            @Override
+                            public SuggestContentType.ContentType call() throws Exception {
+                                return SuggestContentType.fromHttpRequest(contentUri, httpClient);
+                            }
+                        }).get();
+            } catch (InterruptedException | ExecutionException ignored) {
+            }
+        }
+
         switch (contentType) {
             case SMOOTH_STREAMING:
                 return new SmoothStreamingRendererBuilder(context, userAgent, contentUri.toString(), null);
