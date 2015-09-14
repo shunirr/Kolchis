@@ -221,20 +221,7 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
     }
 
     private DemoPlayer.RendererBuilder getRendererBuilder(final Uri contentUri) {
-        ContentType contentType = SuggestContentType.fromFileExtension(contentUri);
-        if (contentType == ContentType.UNKNOWN) {
-            try {
-                contentType = Util.newSingleThreadExecutor(KolchisExoPlayer.class.getName()).submit(
-                        new Callable<ContentType>() {
-                            @Override
-                            public ContentType call() throws Exception {
-                                return SuggestContentType.fromHttpRequest(contentUri, httpClient);
-                            }
-                        }).get();
-            } catch (InterruptedException | ExecutionException ignored) {
-            }
-        }
-
+        final ContentType contentType = getContentType(contentUri);
         switch (contentType) {
             case SMOOTH_STREAMING:
                 return new SmoothStreamingRendererBuilder(context, userAgent, contentUri.toString(), null);
@@ -248,5 +235,22 @@ public class KolchisExoPlayer implements KolchisPlayer, DemoPlayer.Listener {
             default:
                 return new ExtractorRendererBuilder(context, userAgent, contentUri);
         }
+    }
+
+    private ContentType getContentType(final Uri contentUri) {
+        ContentType contentType = SuggestContentType.fromFileExtension(contentUri);
+        if (contentType == ContentType.UNKNOWN) {
+            try {
+                contentType = Util.newSingleThreadExecutor(KolchisExoPlayer.class.getName()).submit(
+                        new Callable<ContentType>() {
+                            @Override
+                            public ContentType call() throws Exception {
+                                return SuggestContentType.fromHttpRequest(contentUri, httpClient);
+                            }
+                        }).get();
+            } catch (InterruptedException | ExecutionException ignored) {
+            }
+        }
+        return contentType;
     }
 }
