@@ -15,6 +15,10 @@ public final class SuggestContentType {
 
     public static ContentType fromFileExtension(final Uri uri) {
         final String lastPassSegment = uri.getLastPathSegment();
+        if (lastPassSegment == null) {
+            return ContentType.UNKNOWN;
+        }
+
         final int position = lastPassSegment.lastIndexOf('.');
         final String extension = lastPassSegment.substring(position, lastPassSegment.length());
         switch (extension) {
@@ -42,17 +46,18 @@ public final class SuggestContentType {
     public static ContentType fromHttpRequest(final Uri uri, final OkHttpClient client) throws IOException {
         final Request request = new Request.Builder()
                 .url(uri.toString())
-                .head()
+                .get()
+                .header("Range", "bytes=0-100")
                 .build();
 
         final Response response = client.newCall(request).execute();
         if (response != null && response.isSuccessful()) {
             final String contentType = response.header("Content-Type", "unknown").toLowerCase();
-            if (contentType.contains("x-mpegurl")) {
+            if (contentType.contains("x-mpegurl") || contentType.contains("vnd.apple.mpegurl")) {
                 return ContentType.HLS;
             } else if (contentType.contains("mpd") || contentType.contains("dash")) {
                 return ContentType.MPEG_DASH;
-            } else if (contentType.equals("application/vnd.ms-sstr+xml")) {
+            } else if (contentType.equals("vnd.ms-sstr+xml")) {
                 return ContentType.SMOOTH_STREAMING;
             } else if (contentType.contains("mp2t")) {
                 return ContentType.TS;
